@@ -1,11 +1,45 @@
-import Head from 'next/head'
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
-import styles from '@/styles/Home.module.css'
+import Head from "next/head";
+import Image from "next/image";
+import { MoneriumClient, AuthContext } from "@monerium/sdk";
+import { Inter } from "next/font/google";
+import styles from "@/styles/Home.module.css";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ["latin"] });
 
-export default function Home() {
+export default function Home(props: AuthContext) {
+  const [authFlowUrl, setAuthFlowUrl] = useState<string | null>(null);
+  const client = new MoneriumClient();
+  const router = useRouter();
+
+  // AuthContext is available in the browser
+  useEffect(() => {
+    const getAuthFlowUrl = async () => {
+      let res = await client.getAuthFlowURI({
+        client_id: "654c9c30-44d3-11ed-adac-b2efc0e6677d",
+        redirect_uri: "https://www.example.com/your-application",
+      });
+      console.log(
+        "%c res",
+        "color:white; padding: 30px; background-color: darkgreen",
+        res
+      );
+
+      setAuthFlowUrl(res);
+    };
+    console.log(
+      "%c authFlowUrl",
+      "color:white; padding: 30px; background-color: darkgreen",
+      authFlowUrl
+    );
+
+    getAuthFlowUrl();
+    return () => {
+      /* cleanup */
+    };
+  }, []);
+
   return (
     <>
       <Head>
@@ -16,99 +50,40 @@ export default function Home() {
       </Head>
       <main className={styles.main}>
         <div className={styles.description}>
-          <p>
-            Get started by editing&nbsp;
-            <code className={styles.code}>src/pages/index.tsx</code>
-          </p>
-          <div>
-            <a
-              href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              By{' '}
-              <Image
-                src="/vercel.svg"
-                alt="Vercel Logo"
-                className={styles.vercelLogo}
-                width={100}
-                height={24}
-                priority
-              />
-            </a>
-          </div>
+          <p>Hey there! {props?.name}</p>
+          <p>Get started with the Monerium API</p>
         </div>
 
         <div className={styles.center}>
-          <Image
-            className={styles.logo}
-            src="/next.svg"
-            alt="Next.js Logo"
-            width={180}
-            height={37}
-            priority
-          />
-        </div>
-
-        <div className={styles.grid}>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            className={styles.button}
+            type="button"
+            onClick={() => router.push(`${authFlowUrl}`)}
           >
-            <h2 className={inter.className}>
-              Docs <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Find in-depth information about Next.js features and&nbsp;API.
-            </p>
-          </a>
-
-          <a
-            href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Learn <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Learn about Next.js in an interactive course with&nbsp;quizzes!
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Templates <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Discover and deploy boilerplate example Next.js&nbsp;projects.
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Deploy <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Instantly deploy your Next.js site to a shareable URL
-              with&nbsp;Vercel.
-            </p>
-          </a>
+            <Image
+              className={styles.logo}
+              src="https://monerium.app/icon.png"
+              alt="Next.js Logo"
+              width={400}
+              height={400}
+              priority
+            />
+          </button>
         </div>
       </main>
     </>
-  )
+  );
+}
+
+export async function getServerSideProps() {
+  const server = new MoneriumClient();
+
+  await server.auth({
+    client_id: "e38f68c0-deac-11ed-8259-a200f4ed426d",
+    client_secret:
+      "028dbeb1a42d9cc573e4c45c2b1114425d4c9415abaf49137494f3c672ea8060",
+  });
+
+  // Pass AuthContext to the page via props
+  return { props: await server.getAuthContext() };
 }
