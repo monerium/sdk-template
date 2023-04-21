@@ -1,44 +1,22 @@
 import Head from "next/head";
 import Image from "next/image";
-import { MoneriumClient, AuthContext } from "@monerium/sdk";
+import { MoneriumClient, AuthContext, Profile, Account } from "@monerium/sdk";
 import { Inter } from "next/font/google";
 import styles from "@/styles/Home.module.css";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { GetServerSideProps } from "next";
+
+import Cookies from "cookies";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export default function Home(props: AuthContext) {
-  const [authFlowUrl, setAuthFlowUrl] = useState<string | null>(null);
-  const client = new MoneriumClient();
+export default function Home(props: {
+  ctx: AuthContext;
+  url: string;
+  profile: Profile;
+}) {
   const router = useRouter();
-
-  // AuthContext is available in the browser
-  useEffect(() => {
-    const getAuthFlowUrl = async () => {
-      let res = await client.getAuthFlowURI({
-        client_id: "654c9c30-44d3-11ed-adac-b2efc0e6677d",
-        redirect_uri: "https://www.example.com/your-application",
-      });
-      console.log(
-        "%c res",
-        "color:white; padding: 30px; background-color: darkgreen",
-        res
-      );
-
-      setAuthFlowUrl(res);
-    };
-    console.log(
-      "%c authFlowUrl",
-      "color:white; padding: 30px; background-color: darkgreen",
-      authFlowUrl
-    );
-
-    getAuthFlowUrl();
-    return () => {
-      /* cleanup */
-    };
-  }, []);
 
   return (
     <>
@@ -50,40 +28,83 @@ export default function Home(props: AuthContext) {
       </Head>
       <main className={styles.main}>
         <div className={styles.description}>
-          <p>Hey there! {props?.name}</p>
+          <p>Hey there! {props?.ctx?.name}</p>
           <p>Get started with the Monerium API</p>
         </div>
-
-        <div className={styles.center}>
-          <button
-            className={styles.button}
-            type="button"
-            onClick={() => router.push(`${authFlowUrl}`)}
-          >
-            <Image
-              className={styles.logo}
-              src="https://monerium.app/icon.png"
-              alt="Next.js Logo"
-              width={400}
-              height={400}
-              priority
-            />
-          </button>
-        </div>
+        {!props?.profile ? (
+          <div className={styles.center}>
+            <button
+              className={styles.button}
+              type="button"
+              onClick={() => router.push(`${props?.url}`)}
+            >
+              <Image
+                className={styles.logo}
+                src="https://monerium.app/icon.png"
+                alt="Next.js Logo"
+                width={400}
+                height={400}
+                priority
+              />
+            </button>
+          </div>
+        ) : (
+          <>
+            {props?.profile?.accounts.map((a: Account) => {
+              return <p>{a?.iban}</p>;
+            })}
+          </>
+        )}
       </main>
     </>
   );
 }
 
-export async function getServerSideProps() {
+export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
   const server = new MoneriumClient();
 
-  await server.auth({
-    client_id: "e38f68c0-deac-11ed-8259-a200f4ed426d",
-    client_secret:
-      "028dbeb1a42d9cc573e4c45c2b1114425d4c9415abaf49137494f3c672ea8060",
-  });
+  const cookies = new Cookies(req, res);
 
+  const refreshToken = cookies.get("refreshToken");
+
+  // await server.auth({
+  //   client_id: "e38f68c0-deac-11ed-8259-a200f4ed426d",
+  //   client_secret:
+  //     "028dbeb1a42d9cc573e4c45c2b1114425d4c9415abaf49137494f3c672ea8060",
+  // });
+  let url = null;
+  url = await server.getAuthFlowURI({
+    client_id: "654c9c30-44d3-11ed-adac-b2efc0e6677d",
+    redirect_uri: "http://localhost:3000/api/monerium",
+  });
+  if (server?.codeVerifier) {
+    cookies.set("codeVerifier", server?.codeVerifier);
+  }
+  console.log("refreshToken", refreshToken);
+  await server
+    .auth({
+      client_id: "654c9c30-44d3-11ed-adac-b2efc0e6677d",
+      refresh_token: refreshToken,
+    })
+    .catch(() => console.error);
+
+  let ctx = null;
+  try {
+    ctx = await server.getAuthContext();
+    console.log("ctx", ctx);
+  } catch (error) {
+    console.log(error);
+  }
+
+  let profile = null;
+  try {
+    if (ctx?.defaultProfile) {
+      profile = await server.getProfile(ctx?.defaultProfile);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+  console.log("profile", profile);
   // Pass AuthContext to the page via props
-  return { props: await server.getAuthContext() };
-}
+  return { props: { ctx: ctx, url: url, profile: profile } };
+};
