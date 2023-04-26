@@ -51,7 +51,7 @@ export default function Home(props: {
         ) : (
           <>
             {props?.profile?.accounts.map((a: Account) => {
-              return <p>{a?.iban}</p>;
+              return <p key={a?.id}>{a?.iban}</p>;
             })}
           </>
         )}
@@ -84,7 +84,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
   await server
     .auth({
       client_id: "654c9c30-44d3-11ed-adac-b2efc0e6677d",
-      refresh_token: refreshToken,
+      refresh_token: refreshToken as string,
     })
     .catch(() => console.error);
 

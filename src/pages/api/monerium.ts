@@ -28,19 +28,11 @@ export default async function handler(
   await client.auth({
     client_id: "654c9c30-44d3-11ed-adac-b2efc0e6677d",
     redirect_uri: "http://localhost:3000/api/monerium",
-    code_verifier: codeVerifier,
+    code_verifier: codeVerifier as string,
     code: queryParams?.code as string,
   });
 
-  const {
-    access_token,
-    expires_in,
-    profile: profileId,
-    userId,
-    refresh_token,
-  } = client.bearerProfile;
-
-  cookies.set("refreshToken", refresh_token);
+  cookies.set("refreshToken", client.bearerProfile?.refresh_token);
 
   res.redirect("/");
 }
