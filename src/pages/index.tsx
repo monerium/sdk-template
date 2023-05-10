@@ -98,7 +98,7 @@ export default function Home(props: {
           </button>
         ) : (
           <>
-            {props?.profile?.accounts.map((a: Account) => {
+            {props?.profile?.accounts?.map((a: Account) => {
               return <p key={a?.id}>{a?.iban}</p>;
             })}
           </>
