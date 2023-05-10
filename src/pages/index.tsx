@@ -11,9 +11,56 @@ import Cookies from "cookies";
 
 const inter = Inter({ subsets: ["latin"] });
 
+export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
+  const emi = new MoneriumClient();
+
+  const cookies = new Cookies(req, res);
+  
+  /**
+  * The url to the partner application onboarding flow.
+  **/
+  const authFlowUrl = await server.getAuthFlowURI({
+    client_id: "654c9c30-44d3-11ed-adac-b2efc0e6677d", // Your applications Authorization Code Flow 'client_id'
+    redirect_uri: "http://localhost:3000/api/monerium",
+  });
+
+  /**
+  * When the user is redirected back to our app, we are redirecting him http://localhost:3000/api/monerium
+  * We will need the codeVerifier there and the `code` from the querym params to be authorized.
+  **/
+  cookies.set("codeVerifier", emi?.codeVerifier);
+
+  const refreshToken = cookies.get("refreshToken");
+  console.log("refreshToken", refreshToken);
+
+  // Try to authorize via refresh token.
+  await emi
+    .auth({
+      client_id: "654c9c30-44d3-11ed-adac-b2efc0e6677d",
+      refresh_token: refreshToken as string,
+    })
+    .catch(() => console.error);
+
+  // The name of the authorized user.
+  const authCtx = await emi.getAuthContext()
+       .catch(() => console.error);
+  
+  // The profile information about the authorized client visiting my app.
+  let profile = undefined;
+  if (authCtx?.defaultProfile) {
+     profile = await emi.getProfile(authCtx?.defaultProfile)
+        .catch(() => console.error);
+  }
+
+  /**
+  * Pass props to page.
+  **/ 
+  return { props: { authCtx: authCtx, authFlowUrl: authFlowUrl, profile: profile } };
+};
+
 export default function Home(props: {
-  ctx: AuthContext;
-  url: string;
+  authCtx: AuthContext;
+  authFlowUrl: string;
   profile: Profile;
 }) {
   const router = useRouter();
@@ -28,7 +75,7 @@ export default function Home(props: {
       </Head>
       <main className={styles.main}>
         <div className={styles.description}>
-          <p>Hey there! {props?.ctx?.name}</p>
+          <p>Hey there! {props?.authCtx?.name}</p>
           <p>Get started with the Monerium API</p>
         </div>
         {!props?.profile ? (
@@ -36,16 +83,9 @@ export default function Home(props: {
             <button
               className={styles.button}
               type="button"
-              onClick={() => router.push(`${props?.url}`)}
+              onClick={() => router.push(`${props?.authFlowUrl}`)}
             >
-              <Image
-                className={styles.logo}
-                src="https://monerium.app/icon.png"
-                alt="Next.js Logo"
-                width={400}
-                height={400}
-                priority
-              />
+              Monerium Authorize 
             </button>
           </div>
         ) : (
@@ -59,47 +99,3 @@ export default function Home(props: {
     </>
   );
 }
-
-export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
-  const server = new MoneriumClient();
-
-  const cookies = new Cookies(req, res);
-
-  const refreshToken = cookies.get("refreshToken");
-  console.log("refreshToken", refreshToken);
-
-  const url = await server.getAuthFlowURI({
-    client_id: "654c9c30-44d3-11ed-adac-b2efc0e6677d",
-    redirect_uri: "http://localhost:3000/api/monerium",
-  });
-
-  if (server?.codeVerifier) {
-    cookies.set("codeVerifier", server?.codeVerifier);
-  }
-
-  await server
-    .auth({
-      client_id: "654c9c30-44d3-11ed-adac-b2efc0e6677d",
-      refresh_token: refreshToken as string,
-    })
-    .catch(() => console.error);
-
-  let ctx = null;
-  try {
-    ctx = await server.getAuthContext();
-  } catch (error) {
-    console.log(error);
-  }
-
-  let profile = null;
-  try {
-    if (ctx?.defaultProfile) {
-      profile = await server.getProfile(ctx?.defaultProfile);
-    }
-  } catch (error) {
-    console.log(error);
-  }
-  console.log("profile", profile);
-  // Pass AuthContext to the page via props
-  return { props: { ctx: ctx, url: url, profile: profile } };
-};
