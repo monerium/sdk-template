@@ -66,21 +66,18 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
   const cookies = new Cookies(req, res);
 
   const refreshToken = cookies.get("refreshToken");
+  console.log("refreshToken", refreshToken);
 
-  // await server.auth({
-  //   client_id: "e38f68c0-deac-11ed-8259-a200f4ed426d",
-  //   client_secret:
-  //     "028dbeb1a42d9cc573e4c45c2b1114425d4c9415abaf49137494f3c672ea8060",
-  // });
-  let url = null;
-  url = await server.getAuthFlowURI({
+  const url = await server.getAuthFlowURI({
     client_id: "654c9c30-44d3-11ed-adac-b2efc0e6677d",
     redirect_uri: "http://localhost:3000/api/monerium",
   });
+
+  // TODO: is it codeVerifier or should it be code_verifier
   if (server?.codeVerifier) {
     cookies.set("codeVerifier", server?.codeVerifier);
   }
-  console.log("refreshToken", refreshToken);
+
   await server
     .auth({
       client_id: "654c9c30-44d3-11ed-adac-b2efc0e6677d",
@@ -91,7 +88,6 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
   let ctx = null;
   try {
     ctx = await server.getAuthContext();
-    console.log("ctx", ctx);
   } catch (error) {
     console.log(error);
   }
