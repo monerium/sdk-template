@@ -41,7 +41,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
     })
     .catch(() => console.error);
 
-  // The name of the authorized user.
+  // The authorized user.
   let authCtx = null;
 
   try {
