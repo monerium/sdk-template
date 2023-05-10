@@ -4,13 +4,12 @@
   justify-content: space-between;
   align-items: center;
   padding: 6rem;
-  min-height: 100vh;
+
 }
 
 .button {
-  border-radius: 50%;
-  box-shadow: -10px -10px 15px rgba(255,255,255,0.5),
-  10px 10px 15px rgba(70,70,70,0.12);
+  height: 200px;
+  width: 400px;
 }
 .button:hover {
   cursor: pointer;
@@ -25,6 +24,7 @@
   width: 100%;
   z-index: 2;
   font-family: var(--font-mono);
+  padding-bottom: 3rem;
 }
 
 .description a {
