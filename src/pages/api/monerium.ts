@@ -17,9 +17,6 @@ export default async function handler(
 
   const emi = new MoneriumClient();
 
-  console.log("middleware codeVerifier", codeVerifier);
-  console.log("middleware queryParams", queryParams);
-
   await emi.auth({
     client_id: "654c9c30-44d3-11ed-adac-b2efc0e6677d",
     redirect_uri: "http://localhost:3000/api/monerium",
