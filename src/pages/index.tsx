@@ -73,7 +73,6 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
     redirect_uri: "http://localhost:3000/api/monerium",
   });
 
-  // TODO: is it codeVerifier or should it be code_verifier
   if (server?.codeVerifier) {
     cookies.set("codeVerifier", server?.codeVerifier);
   }
