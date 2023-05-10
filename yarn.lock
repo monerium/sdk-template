@@ -60,10 +60,10 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-1.2.1.tgz#b520529ec21d8e5945a1851dfd1c32e94e39ff45"
   integrity sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==
 
-"@monerium/sdk@^2.2.1":
-  version "2.2.1"
-  resolved "https://registry.yarnpkg.com/@monerium/sdk/-/sdk-2.2.1.tgz#1f8466a30f4daa23c3972765db026864c75279ab"
-  integrity sha512-DclT+kV82lzQn4Ng8gq59oPmE/G4C/aV7MyML6j6Hfwx6o3ndQujAH57sFsw996fShX4SQGVLfWc9cwSEYKy6Q==
+"@monerium/sdk@^2.3.0":
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/@monerium/sdk/-/sdk-2.3.0.tgz#0e7eab2179eb8cbd45f6f75fe085e11fe3d44750"
+  integrity sha512-gTcPFN9oYdm+yzBpsJuvsQR67GRBIu21wx+gPKxejwdttO+BSeFsRbO8Nd8R0WU3KdSTqghpfDhgn7uktKofRw==
 
 "@next/env@13.3.0":
   version "13.3.0"
