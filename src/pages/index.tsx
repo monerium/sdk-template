@@ -8,55 +8,64 @@ import { useRouter } from "next/navigation";
 import { GetServerSideProps } from "next";
 
 import Cookies from "cookies";
-
-const inter = Inter({ subsets: ["latin"] });
+import { AUTH_FLOW_CLIENT_ID, AUTH_FLOW_REDIRECT_URL } from "@/constants";
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
   const emi = new MoneriumClient();
 
   const cookies = new Cookies(req, res);
 
-  /**
-   * The url to the partner application onboarding flow.
-   **/
-  const authFlowUrl = await emi.getAuthFlowURI({
-    client_id: "654c9c30-44d3-11ed-adac-b2efc0e6677d", // Your applications Authorization Code Flow 'client_id'
-    redirect_uri: "http://localhost:3000/api/monerium",
-  });
-
-  /**
-   * When the user is redirected back to our app, we are redirecting him http://localhost:3000/api/monerium
-   * We will need the codeVerifier there and the `code` from the querym params to be authorized.
-   **/
-  cookies.set("codeVerifier", emi?.codeVerifier);
-
   const refreshToken = cookies.get("refreshToken");
   console.log("refreshToken", refreshToken);
-
-  // Try to authorize via refresh token.
-  await emi
-    .auth({
-      client_id: "654c9c30-44d3-11ed-adac-b2efc0e6677d",
-      refresh_token: refreshToken as string,
-    })
-    .catch(() => console.error);
-
-  // The authorization info about the client visiting my app.
+  let authFlowUrl = null;
   let authCtx = null;
-
-  try {
-    authCtx = await emi.getAuthContext();
-  } catch (e) {
-    console.error(e);
-  }
-
-  // The profile information about the authorized client visiting my app.
   let profile = null;
-  if (authCtx?.defaultProfile) {
+
+  if (!refreshToken) {
+    console.log("No refresh token found");
+    /**
+     * The url to the partner application onboarding flow.
+     **/
+    authFlowUrl = await emi.getAuthFlowURI({
+      client_id: AUTH_FLOW_CLIENT_ID, // Your applications Authorization Code Flow 'client_id'
+      redirect_uri: AUTH_FLOW_REDIRECT_URL,
+    });
+
+    /**
+     * When the user is redirected back to our app, we are redirecting him http://localhost:3000/api/monerium
+     * We will need the codeVerifier there and the `code` from the querym params to be authorized.
+     **/
+    cookies.set("codeVerifier", emi?.codeVerifier);
+  } else {
+    // Try to authorize via refresh token.
+    await emi
+      .auth({
+        client_id: AUTH_FLOW_CLIENT_ID,
+        refresh_token: refreshToken as string,
+      })
+      .catch(() => console.error);
+
+    // The authorization info about the client visiting my app.
+
     try {
-      profile = await emi.getProfile(authCtx?.defaultProfile);
+      authCtx = await emi.getAuthContext();
+      console.log(
+        "%c authCtx",
+        "color:white; padding: 30px; background-color: darkgreen",
+        authCtx
+      );
     } catch (e) {
       console.error(e);
+    }
+
+    // The profile information about the authorized client visiting my app.
+
+    if (authCtx?.defaultProfile) {
+      try {
+        profile = await emi.getProfile(authCtx?.defaultProfile);
+      } catch (e) {
+        console.error(e);
+      }
     }
   }
 

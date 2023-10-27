@@ -1,7 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import Cookies from "cookies";
 import { MoneriumClient } from "@monerium/sdk";
-import { profile } from "console";
+import { AUTH_FLOW_CLIENT_ID, AUTH_FLOW_REDIRECT_URL } from "@/constants";
+
 type Data = {
   name: string;
 };
@@ -18,8 +19,8 @@ export default async function handler(
   const emi = new MoneriumClient();
 
   await emi.auth({
-    client_id: "654c9c30-44d3-11ed-adac-b2efc0e6677d",
-    redirect_uri: "http://localhost:3000/api/monerium",
+    client_id: AUTH_FLOW_CLIENT_ID,
+    redirect_uri: AUTH_FLOW_REDIRECT_URL,
     code_verifier: codeVerifier as string,
     code: queryParams?.code as string,
   });
