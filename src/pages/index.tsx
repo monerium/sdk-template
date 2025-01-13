@@ -1,116 +1,152 @@
 import Head from "next/head";
 import Image from "next/image";
-import { MoneriumClient, AuthContext, Profile, Account } from "@monerium/sdk";
-import { Inter } from "next/font/google";
+import { IBAN, MoneriumClient, ProfilePermissions } from "@monerium/sdk";
 import styles from "@/styles/Home.module.css";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { GetServerSideProps } from "next";
 
-import Cookies from "cookies";
 import { AUTH_FLOW_CLIENT_ID, AUTH_FLOW_REDIRECT_URL } from "@/constants";
 
-export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
-  const emi = new MoneriumClient();
-
-  const cookies = new Cookies(req, res);
-
-  const refreshToken = cookies.get("refreshToken");
-  console.log("refreshToken", refreshToken);
-  let authFlowUrl = null;
-  let authCtx = null;
-  let profile = null;
-
-  if (!refreshToken) {
-    console.log("No refresh token found");
-    /**
-     * The url to the partner application onboarding flow.
-     **/
-    authFlowUrl = await emi.getAuthFlowURI({
-      client_id: AUTH_FLOW_CLIENT_ID, // Your applications Authorization Code Flow 'client_id'
-      redirect_uri: AUTH_FLOW_REDIRECT_URL,
-    });
-
-    /**
-     * When the user is redirected back to our app, we are redirecting him http://localhost:3000/api/monerium
-     * We will need the codeVerifier there and the `code` from the querym params to be authorized.
-     **/
-    cookies.set("codeVerifier", emi?.codeVerifier);
-  } else {
-    // Try to authorize via refresh token.
-    await emi
-      .auth({
-        client_id: AUTH_FLOW_CLIENT_ID,
-        refresh_token: refreshToken as string,
-      })
-      .catch(() => console.error);
-
-    // The authorization info about the client visiting my app.
-
-    try {
-      authCtx = await emi.getAuthContext();
-      console.log(
-        "%c authCtx",
-        "color:white; padding: 30px; background-color: darkgreen",
-        authCtx
-      );
-    } catch (e) {
-      console.error(e);
-    }
-
-    // The profile information about the authorized client visiting my app.
-
-    if (authCtx?.defaultProfile) {
-      try {
-        profile = await emi.getProfile(authCtx?.defaultProfile);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  }
-
-  /**
-   * Pass props to page.
-   **/
-  return {
-    props: { authCtx: authCtx, authFlowUrl: authFlowUrl, profile: profile },
-  };
-};
-
-export default function Home(props: {
-  authCtx: AuthContext;
-  authFlowUrl: string;
-  profile: Profile;
-}) {
+export default function Home() {
+  const [profile, setProfile] = useState<ProfilePermissions | null>(null);
+  const [iban, setIban] = useState<IBAN | null>(null);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const router = useRouter();
+
+  const [sdk] = useState(() => {
+    // Initialize the SDK
+    return new MoneriumClient({
+      environment: "sandbox",
+      clientId: AUTH_FLOW_CLIENT_ID, // Your applications Authorization Code Flow 'client_id'
+      redirectUri: AUTH_FLOW_REDIRECT_URL,
+      debug: true,
+    });
+  });
+
+  useEffect(() => {
+    const connect = async () => {
+      if (sdk) {
+        try {
+          setIsAuthorized(await sdk.getAccess());
+        } catch (error) {
+          console.error("Failed to get access:", error);
+        } finally {
+          // TODO: set loading state
+          if (sdk?.bearerProfile) {
+            // TODO: securely store the refresh token
+            setRefreshToken(sdk.bearerProfile.refresh_token);
+          }
+        }
+      }
+    };
+
+    connect();
+
+    return () => {
+      if (sdk) {
+        sdk.disconnect();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const reconnect = async (token: string) => {
+      if (sdk) {
+        try {
+          setIsAuthorized(await sdk.getAccess(token));
+        } catch (error) {
+          console.error("Failed to get access:", error);
+        } finally {
+          // TODO: set loading state
+          if (sdk?.bearerProfile) {
+            // TODO: securely store the refresh token
+            setRefreshToken(sdk.bearerProfile.refresh_token);
+          }
+        }
+      }
+    };
+    if (refreshToken && !isAuthorized) {
+      reconnect(refreshToken);
+    }
+  }, [sdk, refreshToken]);
+
+  useEffect(() => {
+    const getProfiles = async () => {
+      try {
+        const data = await sdk?.getProfiles();
+        setProfile(data?.profiles?.[0]);
+        console.log("Profile", profile);
+      } catch (error) {
+        console.error("Failed to get profile:", error);
+      }
+    };
+    const getIbans = async () => {
+      try {
+        const data = await sdk?.getIbans();
+        setIban(data?.ibans?.[0]);
+        console.log("Ibans", data);
+      } catch (error) {
+        console.error("Failed to get ibans:", error);
+      }
+    };
+
+    if (isAuthorized) {
+      getProfiles();
+      getIbans();
+    }
+  }, [isAuthorized]);
 
   return (
     <>
       <Head>
-        <title>Create Next App</title>
+        <title>Monerium SDK Demo</title>
         <meta name="description" content="Generated by create next app" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="https://monerium.app/icon.png" />
       </Head>
       <main className={styles.main}>
         <div className={styles.description}>
-          <p>Hey there! {props?.authCtx?.name}</p>
+          <p>Hey there! {profile?.name}</p>
           <p>Get started with the Monerium API</p>
         </div>
-        {!props?.profile?.accounts ? (
+        {isAuthorized && iban && (
+          <div className={styles.ibanContainer}>
+            <p>Your IBAN:</p>
+            <div className={styles.iban}>
+              <p>{iban.iban}</p>
+            </div>
+          </div>
+        )}
+
+        {!isAuthorized && (
           <button
-            className={styles.button}
+            className={styles.connectBtn}
             type="button"
-            onClick={() => router.push(`${props?.authFlowUrl}`)}
+            onClick={() => sdk.authorize()}
           >
-            Monerium Authorize
+            <Image
+              src="https://monerium.app/icon.png"
+              alt="Monerium logo"
+              width={24}
+              height={24}
+            />
+            Connect to Monerium
           </button>
-        ) : (
-          <>
-            {props?.profile?.accounts?.map((a: Account) => {
-              return <p key={a?.id}>{a?.iban}</p>;
-            })}
-          </>
+        )}
+
+        {isAuthorized && (
+          <button
+            className={styles.revokeBtn}
+            type="button"
+            onClick={() => {
+              sdk.revokeAccess();
+              setIsAuthorized(false);
+              setProfile(null);
+            }}
+          >
+            Revoke access
+          </button>
         )}
       </main>
     </>

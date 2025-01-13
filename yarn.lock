@@ -60,10 +60,12 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-1.2.1.tgz#b520529ec21d8e5945a1851dfd1c32e94e39ff45"
   integrity sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==
 
-"@monerium/sdk@^2.3.0":
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/@monerium/sdk/-/sdk-2.3.0.tgz#0e7eab2179eb8cbd45f6f75fe085e11fe3d44750"
-  integrity sha512-gTcPFN9oYdm+yzBpsJuvsQR67GRBIu21wx+gPKxejwdttO+BSeFsRbO8Nd8R0WU3KdSTqghpfDhgn7uktKofRw==
+"@monerium/sdk@3.3.0":
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/@monerium/sdk/-/sdk-3.3.0.tgz#89514d0e4909fa2682381466ef8ad642c4286eac"
+  integrity sha512-vFsS+mRqdBgPnXpenXp6/u51EANyzwl9EKLZlJ77j1oXkzrC0lDUJMXPLgzyZVLrR0euuctCV/Rt9e9u+EzFcA==
+  dependencies:
+    crypto-js "^4.2.0"
 
 "@next/env@13.3.0":
   version "13.3.0"
@@ -531,6 +533,11 @@ cross-spawn@^7.0.2, cross-spawn@^7.0.3:
     path-key "^3.1.0"
     shebang-command "^2.0.0"
     which "^2.0.1"
+
+crypto-js@^4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-4.2.0.tgz#4d931639ecdfd12ff80e8186dba6af2c2e856631"
+  integrity sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==
 
 csstype@^3.0.2:
   version "3.1.2"
