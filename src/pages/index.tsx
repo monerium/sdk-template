@@ -76,7 +76,7 @@ export default function Home() {
       try {
         const data = await sdk?.getProfiles();
         setProfile(data?.profiles?.[0]);
-        console.log("Profile", profile);
+        console.log("Profiles", data);
       } catch (error) {
         console.error("Failed to get profile:", error);
       }
@@ -123,7 +123,11 @@ export default function Home() {
           <button
             className={styles.connectBtn}
             type="button"
-            onClick={() => sdk.authorize()}
+            onClick={() =>
+              sdk.authorize({
+                // skipCreateAccount: true,
+              })
+            }
           >
             <Image
               src="https://monerium.app/icon.png"
