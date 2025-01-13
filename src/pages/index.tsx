@@ -1,6 +1,6 @@
 import Head from "next/head";
 import Image from "next/image";
-import { IBAN, MoneriumClient, ProfilePermissions } from "@monerium/sdk";
+import { IBAN, MoneriumClient, Profile } from "@monerium/sdk";
 import styles from "@/styles/Home.module.css";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { AUTH_FLOW_CLIENT_ID, AUTH_FLOW_REDIRECT_URL } from "@/constants";
 
 export default function Home() {
-  const [profile, setProfile] = useState<ProfilePermissions | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [iban, setIban] = useState<IBAN | null>(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
